@@ -70,7 +70,7 @@ const isActive = (href: string) => stripTrailingSlash(href) === stripTrailingSla
 	}
 	li a:hover {
 		background: rgb(var(--gray-light), 60%);
-		color: rgb(var(--accent));
+		color: var(--accent);
 	}
 	.title {
 		font-size: 0.92em;
@@ -87,10 +87,11 @@ const isActive = (href: string) => stripTrailingSlash(href) === stripTrailingSla
 		color: rgb(var(--gray));
 	}
 	li.active a {
-		background: rgb(var(--accent));
-		color: white;
+		background: var(--accent);
+		color: var(--bg);
 	}
 	li.active a .date {
-		color: rgb(255 255 255 / 85%);
+		color: var(--bg);
+		opacity: 0.8;
 	}
 </style>

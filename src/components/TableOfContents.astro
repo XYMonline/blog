@@ -110,12 +110,12 @@
 		white-space: nowrap;
 	}
 	.toc-body a:hover {
-		color: rgb(var(--accent));
+		color: var(--accent);
 	}
 	.toc-body a.active {
 		border-left-color: var(--accent);
-		background: rgb(var(--accent), 8%);
-		color: rgb(var(--black));
+		background: color-mix(in srgb, var(--accent) 12%, transparent);
+		color: var(--heading);
 		font-weight: 600;
 	}
 	.toc-body li.lvl-3 a {

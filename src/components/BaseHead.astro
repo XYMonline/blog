@@ -50,3 +50,32 @@ const { title, description, image = FallbackImage } = Astro.props;
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
+<script is:inline>
+	// 主题三态:light / dark / system(默认跟随系统,用户选择持久化到 localStorage)
+	(function () {
+		const root = document.documentElement;
+		const media = window.matchMedia('(prefers-color-scheme: dark)');
+		const modes = ['light', 'dark', 'system'];
+
+		const resolve = (mode) =>
+			mode === 'dark' || (mode !== 'light' && media.matches) ? 'dark' : 'light';
+
+		const apply = () => {
+			let mode = 'system';
+			try {
+				const stored = localStorage.getItem('theme');
+				if (stored && modes.includes(stored)) mode = stored;
+			} catch {}
+			root.dataset.themeChoice = mode;
+			root.dataset.theme = resolve(mode);
+		};
+
+		apply();
+		// 处于“跟随系统”时,系统偏好变化后实时切换
+		try {
+			media.addEventListener('change', () => {
+				if (root.dataset.themeChoice === 'system') root.dataset.theme = resolve('system');
+			});
+		} catch {}
+	})();
+</script>
