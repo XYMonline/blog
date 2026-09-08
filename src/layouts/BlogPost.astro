@@ -5,20 +5,83 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
+import PostList from '../components/PostList.astro';
+import TableOfContents from '../components/TableOfContents.astro';
 
-type Props = CollectionEntry<'blog'>['data'];
+type Props = CollectionEntry<'blog'>['data'] & {
+	activeHref?: string;
+};
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, activeHref = '' } = Astro.props;
 ---
 
 <html lang="en">
 	<head>
 		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
+		<style is:global>
+			/* 通用的侧栏卡片样式(供左右两个 widget 复用) */
+			.widget {
+				background: white;
+				border: 1px solid rgb(var(--gray-light));
+				border-radius: 12px;
+				box-shadow: 0 1px 3px rgba(var(--gray), 12%), 0 4px 12px rgba(var(--gray), 8%);
+				overflow: hidden;
+			}
+			.widget-title {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
 				margin: 0;
+				padding: 0.7rem 1rem;
+				font-size: 0.95rem;
+				font-weight: 700;
+				letter-spacing: 0.02em;
+				border-bottom: 1px solid rgb(var(--gray-light));
+			}
+			.widget-title::before {
+				content: '';
+				width: 4px;
+				height: 1em;
+				border-radius: 2px;
+				background: var(--accent);
+			}
+			.widget-title .count {
+				margin-left: auto;
+				padding: 0.1rem 0.5rem;
+				border-radius: 999px;
+				background: rgb(var(--gray-light), 60%);
+				color: rgb(var(--gray));
+				font-size: 0.75em;
+				font-weight: 600;
+			}
+			.widget-body {
+				max-height: calc(100vh - 11rem);
+				overflow-y: auto;
+				padding: 0.5rem;
+			}
+		</style>
+		<style>
+			.reading-layout {
+				width: min(100% - 2rem, 96rem);
+				margin: 0 auto;
+				padding: 1rem 0 2rem;
+				display: grid;
+				grid-template-columns: minmax(0, 1fr);
+				gap: 1.5rem;
+				align-items: start;
+			}
+			.reading-aside {
+				display: none;
+				position: sticky;
+				top: 1.5rem;
+				min-width: 0;
+			}
+			.reading-layout main {
+				margin: 0;
+				width: auto;
+				max-width: none;
+				min-width: 0;
+				padding: 1.5em 0 0;
 			}
 			.hero-image {
 				width: 100%;
@@ -30,8 +93,7 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 				box-shadow: var(--box-shadow);
 			}
 			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
+				width: min(100%, 720px);
 				margin: auto;
 				padding: 1em;
 				color: rgb(var(--gray-dark));
@@ -52,35 +114,63 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
 			.last-updated-on {
 				font-style: italic;
 			}
+
+			/* ≥1040px: 左侧文章列表 + 正文(双栏) */
+			@media (min-width: 1040px) {
+				.reading-layout {
+					grid-template-columns: 16rem minmax(0, 1fr);
+				}
+				.reading-aside--left {
+					display: block;
+				}
+			}
+
+			/* ≥1360px: 左侧文章列表 + 正文 + 右侧目录(三栏) */
+			@media (min-width: 1360px) {
+				.reading-layout {
+					grid-template-columns: 16rem minmax(0, 1fr) 16rem;
+				}
+				.reading-aside--right {
+					display: block;
+				}
+			}
 		</style>
 	</head>
 
 	<body>
 		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
+		<div class="reading-layout">
+			<aside class="reading-aside reading-aside--left">
+				<PostList activeHref={activeHref} />
+			</aside>
+			<main id="article-body" class="article-body">
+				<article>
+					<div class="hero-image">
+						{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
 					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
+					<div class="prose">
+						<div class="title">
+							<div class="date">
+								<FormattedDate date={pubDate} />
+								{
+									updatedDate && (
+										<div class="last-updated-on">
+											Last updated on <FormattedDate date={updatedDate} />
+										</div>
+									)
+								}
+							</div>
+							<h1>{title}</h1>
+							<hr />
+						</div>
+						<slot />
+					</div>
+				</article>
+			</main>
+			<aside class="reading-aside reading-aside--right">
+				<TableOfContents />
+			</aside>
+		</div>
 		<Footer />
 	</body>
 </html>

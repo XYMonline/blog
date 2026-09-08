@@ -1,0 +1,134 @@
+---
+// 目录在构建时无法预知标题 id,故由前端脚本扫描正文标题生成。
+---
+
+<aside class="widget toc-widget" aria-label="文章目录">
+	<h2 class="widget-title">文章目录</h2>
+	<nav id="toc-nav" class="widget-body toc-body" aria-label="本页目录"></nav>
+</aside>
+
+<script>
+	(() => {
+		const root = document.getElementById('article-body');
+		if (!root) return;
+
+		const headings = Array.from(root.querySelectorAll('h2, h3'));
+
+		const nav = document.getElementById('toc-nav');
+		if (!headings.length) {
+			const empty = document.createElement('p');
+			empty.className = 'toc-empty';
+			empty.textContent = '本页暂无目录';
+			nav?.appendChild(empty);
+			return;
+		}
+
+		// 生成与 rehype-slug / GitHub 一致的 slug(保留中日韩字符)
+		const slugify = (text: string) =>
+			text
+				.toLowerCase()
+				.trim()
+				.replace(/[\u2000-\u206f\u2e00-\u2e7f\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '')
+				.replace(/\s+/g, '-')
+				.replace(/-+$/g, '');
+
+		const used = new Set<string>();
+		for (const el of root.querySelectorAll('[id]')) used.add(el.id);
+
+		for (const h of headings) {
+			if (!h.id) {
+				const base = slugify(h.textContent ?? '') || `section-${used.size + 1}`;
+				let id = base;
+				let n = 2;
+				while (used.has(id)) id = `${base}-${n++}`;
+				h.id = id;
+				used.add(id);
+			}
+		}
+
+		const ul = document.createElement('ul');
+		for (const h of headings) {
+			const li = document.createElement('li');
+			li.className = h.tagName.toLowerCase() === 'h3' ? 'lvl-3' : 'lvl-2';
+			const a = document.createElement('a');
+			a.href = `#${h.id}`;
+			a.textContent = h.textContent ?? '';
+			li.appendChild(a);
+			ul.appendChild(li);
+		}
+		nav?.appendChild(ul);
+
+		// 滚动高亮当前章节
+		const links = Array.from(ul.querySelectorAll('a'));
+		const idToLink = new Map(links.map((a) => [a.getAttribute('href')?.slice(1), a]));
+
+		const setActive = (id: string) => {
+			const link = idToLink.get(id);
+			if (!link) return;
+			links.forEach((a) => a.classList.toggle('active', a === link));
+		};
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) setActive(entry.target.id);
+				}
+			},
+			{ rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+		);
+		headings.forEach((h) => observer.observe(h));
+	})();
+</script>
+
+<style is:global>
+	.toc-widget .widget-body {
+		padding: 0.5rem 0.75rem;
+	}
+	.toc-body ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.toc-body li {
+		margin: 0;
+	}
+	.toc-body a {
+		display: block;
+		padding: 0.35rem 0.6rem;
+		border-left: 2px solid transparent;
+		border-radius: 4px;
+		color: rgb(var(--gray));
+		font-size: 0.92em;
+		line-height: 1.4;
+		text-decoration: none;
+		transition:
+			background-color 0.2s ease,
+			color 0.2s ease,
+			border-color 0.2s ease;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.toc-body a:hover {
+		color: rgb(var(--accent));
+	}
+	.toc-body a.active {
+		border-left-color: var(--accent);
+		background: rgb(var(--accent), 8%);
+		color: rgb(var(--black));
+		font-weight: 600;
+	}
+	.toc-body li.lvl-3 a {
+		padding-left: 1.25rem;
+		font-size: 0.85em;
+	}
+	.toc-empty {
+		margin: 0;
+		padding: 0.75rem;
+		font-size: 0.85em;
+		color: rgb(var(--gray));
+	}
+	.article-body :is(h2, h3) {
+		scroll-margin-top: 1.5rem;
+	}
+</style>
