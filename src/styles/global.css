@@ -55,12 +55,19 @@ body {
 	color: var(--text);
 	font-size: 20px;
 	line-height: 1.7;
+	/* 让页脚始终贴住视口底部(内容不足一屏时页脚也在底部) */
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	min-height: 100dvh;
 }
 main {
 	width: 720px;
 	max-width: calc(100% - 2em);
 	margin: auto;
 	padding: 3em 1em;
+	/* 作为 body 纵向 flex 的直接子元素时,撑满头部到页脚之间的高度 */
+	flex: 1 0 auto;
 }
 h1,
 h2,
