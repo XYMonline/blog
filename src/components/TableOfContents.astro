@@ -1,83 +1,98 @@
 ---
 // 目录在构建时无法预知标题 id,故由前端脚本扫描正文标题生成。
+// inline=true 时渲染为文章内折叠目录(右栏不可用时兜底);否则为右侧栏 widget。
+interface Props {
+	inline?: boolean;
+	tocId?: string;
+}
+
+const { inline = false, tocId = 'toc-nav' } = Astro.props;
 ---
 
-<aside class="widget toc-widget" aria-label="文章目录">
-	<h2 class="widget-title">文章目录</h2>
-	<nav id="toc-nav" class="widget-body toc-body" aria-label="本页目录"></nav>
-</aside>
+{
+	inline ? (
+		<details class="toc-inline" open>
+			<summary>
+				<span class="toc-inline-title">文章目录</span>
+			</summary>
+			<nav id={tocId} class="toc-body" aria-label="本页目录"></nav>
+		</details>
+	) : (
+		<aside class="widget toc-widget" aria-label="文章目录">
+			<h2 class="widget-title">文章目录</h2>
+			<nav id={tocId} class="widget-body toc-body" aria-label="本页目录"></nav>
+		</aside>
+	)
+}
 
-<script>
-	(() => {
-		const root = document.getElementById('article-body');
-		if (!root) return;
-
+<script define:vars={{ tocId }}>
+	const root = document.getElementById('article-body');
+	const nav = document.getElementById(tocId);
+	if (root && nav) {
 		const headings = Array.from(root.querySelectorAll('h2, h3'));
 
-		const nav = document.getElementById('toc-nav');
 		if (!headings.length) {
 			const empty = document.createElement('p');
 			empty.className = 'toc-empty';
 			empty.textContent = '本页暂无目录';
-			nav?.appendChild(empty);
-			return;
-		}
+			nav.appendChild(empty);
+		} else {
+			// 生成与 rehype-slug / GitHub 一致的 slug(保留中日韩字符)
+			const slugify = (text) =>
+				text
+					.toLowerCase()
+					.trim()
+					.replace(/[\u2000-\u206f\u2e00-\u2e7f\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '')
+					.replace(/\s+/g, '-')
+					.replace(/-+$/g, '');
 
-		// 生成与 rehype-slug / GitHub 一致的 slug(保留中日韩字符)
-		const slugify = (text: string) =>
-			text
-				.toLowerCase()
-				.trim()
-				.replace(/[\u2000-\u206f\u2e00-\u2e7f\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g, '')
-				.replace(/\s+/g, '-')
-				.replace(/-+$/g, '');
+			const used = new Set();
+			for (const el of root.querySelectorAll('[id]')) used.add(el.id);
 
-		const used = new Set<string>();
-		for (const el of root.querySelectorAll('[id]')) used.add(el.id);
-
-		for (const h of headings) {
-			if (!h.id) {
-				const base = slugify(h.textContent ?? '') || `section-${used.size + 1}`;
-				let id = base;
-				let n = 2;
-				while (used.has(id)) id = `${base}-${n++}`;
-				h.id = id;
-				used.add(id);
-			}
-		}
-
-		const ul = document.createElement('ul');
-		for (const h of headings) {
-			const li = document.createElement('li');
-			li.className = h.tagName.toLowerCase() === 'h3' ? 'lvl-3' : 'lvl-2';
-			const a = document.createElement('a');
-			a.href = `#${h.id}`;
-			a.textContent = h.textContent ?? '';
-			li.appendChild(a);
-			ul.appendChild(li);
-		}
-		nav?.appendChild(ul);
-
-		// 滚动高亮当前章节
-		const links = Array.from(ul.querySelectorAll('a'));
-		const idToLink = new Map(links.map((a) => [a.getAttribute('href')?.slice(1), a]));
-
-		const setActive = (id: string) => {
-			const link = idToLink.get(id);
-			if (!link) return;
-			links.forEach((a) => a.classList.toggle('active', a === link));
-		};
-
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) setActive(entry.target.id);
+			for (const h of headings) {
+				if (!h.id) {
+					const base = slugify(h.textContent ?? '') || `section-${used.size + 1}`;
+					let id = base;
+					let n = 2;
+					while (used.has(id)) id = `${base}-${n++}`;
+					h.id = id;
+					used.add(id);
 				}
-			},
-			{ rootMargin: '-15% 0px -70% 0px', threshold: 0 },
-		);
-		headings.forEach((h) => observer.observe(h));
-	})();
+			}
+
+			const ul = document.createElement('ul');
+			for (const h of headings) {
+				const li = document.createElement('li');
+				li.className = h.tagName.toLowerCase() === 'h3' ? 'lvl-3' : 'lvl-2';
+				const a = document.createElement('a');
+				a.href = `#${h.id}`;
+				a.textContent = h.textContent ?? '';
+				li.appendChild(a);
+				ul.appendChild(li);
+			}
+			nav.appendChild(ul);
+
+			// 滚动高亮当前章节
+			const links = Array.from(ul.querySelectorAll('a'));
+			const idToLink = new Map(links.map((a) => [a.getAttribute('href')?.slice(1), a]));
+
+			const setActive = (id) => {
+				const link = idToLink.get(id);
+				if (!link) return;
+				links.forEach((a) => a.classList.toggle('active', a === link));
+			};
+
+			const observer = new IntersectionObserver(
+				(entries) => {
+					for (const entry of entries) {
+						if (entry.isIntersecting) setActive(entry.target.id);
+					}
+				},
+				{ rootMargin: '-15% 0px -70% 0px', threshold: 0 },
+			);
+			headings.forEach((h) => observer.observe(h));
+		}
+	}
 </script>
 
 <style is:global>
@@ -130,5 +145,43 @@
 	}
 	.article-body :is(h2, h3) {
 		scroll-margin-top: 1.5rem;
+	}
+
+	/* 内联目录:默认隐藏(右侧栏可见时);右栏不可用时显示 */
+	.toc-inline {
+		display: none;
+		margin: 0 0 1.25rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 10px;
+		background: var(--surface);
+	}
+	.toc-inline summary {
+		padding: 0.6rem 1rem;
+		cursor: pointer;
+		list-style: none;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 600;
+		font-size: 0.9rem;
+		color: var(--heading);
+	}
+	.toc-inline summary::-webkit-details-marker {
+		display: none;
+	}
+	.toc-inline summary::after {
+		content: '';
+		width: 4px;
+		height: 1em;
+		border-radius: 2px;
+		background: var(--accent);
+	}
+	.toc-inline .toc-body {
+		padding: 0 0.5rem 0.5rem;
+	}
+	@media (max-width: 1199.98px) {
+		.toc-inline {
+			display: block;
+		}
 	}
 </style>

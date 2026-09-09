@@ -1,114 +1,175 @@
 ---
 import { Image } from 'astro:assets';
-import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getSortedPosts } from '../../lib/blog';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const posts = await getSortedPosts();
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: var(--accent);
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
+<MainLayout title={`${SITE_TITLE} · Blog`} description={SITE_DESCRIPTION}>
+	<section class="blog-list">
+		<div class="list-head">
+			<h2 class="section-title">全部文章</h2>
+			<p id="filter-hint" class="filter-hint" hidden></p>
+		</div>
+
+		<div id="posts" class="grid">
+			{
+				posts.map((post) => (
+					<article
+						class="card"
+						data-category={(post.data.category ?? '').toLowerCase()}
+						data-tags={(post.data.tags ?? []).map((t) => t.toLowerCase()).join(' ')}
+					>
+						<a href={`/blog/${post.id}/`}>
+							{
+								post.data.heroImage && (
+									<div class="cover">
 										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-	</body>
-</html>
+									</div>
+								)
+							}
+							<div class="body">
+								<div class="meta">
+									<FormattedDate date={post.data.pubDate} />
+									{post.data.category && <span class="cat">{post.data.category}</span>}
+								</div>
+								<h3 class="title">{post.data.title}</h3>
+								<p class="desc">{post.data.description}</p>
+							</div>
+						</a>
+					</article>
+				))
+			}
+		</div>
+
+		<p id="empty" class="empty" hidden>该分类 / 标签下暂无文章。</p>
+	</section>
+</MainLayout>
+
+<script>
+	const params = new URLSearchParams(window.location.search);
+	const category = (params.get('category') ?? '').trim().toLowerCase();
+	const tag = (params.get('tag') ?? '').trim().toLowerCase();
+
+	const posts = document.querySelectorAll<HTMLElement>('#posts .card');
+	const empty = document.getElementById('empty');
+	const hint = document.getElementById('filter-hint');
+
+	if (category || tag) {
+		let visible = 0;
+		for (const card of posts) {
+			const inCategory = !category || (card.dataset.category ?? '').includes(category);
+			const inTag = !tag || (card.dataset.tags ?? '').split(' ').includes(tag);
+			const show = inCategory && inTag;
+			card.hidden = !show;
+			if (show) visible++;
+		}
+		if (hint) {
+			hint.hidden = false;
+			const label = category
+				? `分类: ${category}`
+				: `标签: ${tag}`;
+			hint.textContent = `当前筛选 ${label}`;
+		}
+		if (empty) empty.hidden = visible !== 0;
+	}
+</script>
+
+<style>
+	.blog-list {
+		max-width: 62rem;
+		margin: 0 auto;
+	}
+	.list-head {
+		display: flex;
+		align-items: baseline;
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+	.section-title {
+		margin: 0;
+		font-size: 1.5rem;
+		color: var(--heading);
+	}
+	.filter-hint {
+		margin: 0;
+		font-size: 0.9em;
+		color: var(--muted);
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+		gap: 1.25rem;
+	}
+	.card {
+		overflow: hidden;
+		background: var(--surface);
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 12px;
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+	.card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--box-shadow);
+	}
+	.card a {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		text-decoration: none;
+		color: var(--text);
+	}
+	.cover img {
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+	}
+	.body {
+		padding: 0.9rem 1rem 1.1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		flex: 1;
+	}
+	.meta {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		font-size: 0.8em;
+		color: var(--muted);
+	}
+	.cat {
+		padding: 0.05rem 0.5rem;
+		border-radius: 999px;
+		background: rgb(var(--gray-light), 70%);
+		color: var(--muted);
+		font-weight: 600;
+	}
+	.title {
+		margin: 0;
+		font-size: 1.15rem;
+		line-height: 1.35;
+		color: var(--heading);
+	}
+	.desc {
+		margin: 0;
+		font-size: 0.88em;
+		line-height: 1.5;
+		color: var(--muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+	}
+	.empty {
+		padding: 2rem;
+		text-align: center;
+		color: var(--muted);
+	}
+</style>

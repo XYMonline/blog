@@ -1,0 +1,47 @@
+---
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+const initial = (SITE_TITLE.trim().charAt(0) || 'B').toUpperCase();
+---
+
+<section class="widget author-card">
+	<div class="avatar" aria-hidden="true">{initial}</div>
+	<div class="meta">
+		<h2 class="name">{SITE_TITLE}</h2>
+		<p class="bio">{SITE_DESCRIPTION}</p>
+	</div>
+</section>
+
+<style>
+	.author-card {
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		padding: 1rem;
+	}
+	.avatar {
+		flex: none;
+		width: 3.2rem;
+		height: 3.2rem;
+		border-radius: 50%;
+		background: var(--accent);
+		color: var(--bg);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 1.25rem;
+	}
+	.name {
+		margin: 0;
+		font-size: 1.05rem;
+		line-height: 1.3;
+		color: var(--heading);
+	}
+	.bio {
+		margin: 0.25rem 0 0;
+		font-size: 0.85rem;
+		line-height: 1.5;
+		color: var(--muted);
+	}
+</style>

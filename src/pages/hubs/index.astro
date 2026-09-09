@@ -1,0 +1,113 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getHubCounts, getPostsOfHub, hubSlug } from '../../lib/blog';
+
+const hubs = await getHubCounts();
+
+const hubCards = [];
+for (const [name, count] of hubs) {
+	hubCards.push({ name, count, posts: await getPostsOfHub(name) });
+}
+---
+
+<MainLayout title={`${SITE_TITLE} · 专题`} description={SITE_DESCRIPTION}>
+	<section class="hub-index">
+		<h2 class="section-title">专题</h2>
+		<div class="grid">
+			{
+				hubCards.length ? (
+					hubCards.map(({ name, count, posts }) => (
+						<a class="card" href={`/hubs/${hubSlug(name)}/`}>
+							<div class="card-head">
+								<h3 class="hub-name">{name}</h3>
+								<span class="count">{count} 篇</span>
+							</div>
+							<ul class="samples">
+								{posts.slice(0, 3).map((post) => (
+									<li>{post.data.title}</li>
+								))}
+							</ul>
+						</a>
+					))
+				) : (
+					<p class="empty">暂无专题</p>
+				)
+			}
+		</div>
+	</section>
+</MainLayout>
+
+<style>
+	.hub-index {
+		max-width: 62rem;
+		margin: 0 auto;
+	}
+	.section-title {
+		margin: 0 0 1.25rem;
+		font-size: 1.5rem;
+		color: var(--heading);
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+		gap: 1.25rem;
+	}
+	.card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding: 1rem 1.1rem;
+		background: var(--surface);
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 12px;
+		text-decoration: none;
+		color: var(--text);
+		transition:
+			transform 0.2s ease,
+			box-shadow 0.2s ease;
+	}
+	.card:hover {
+		transform: translateY(-2px);
+		box-shadow: var(--box-shadow);
+	}
+	.card-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.hub-name {
+		margin: 0;
+		font-size: 1.1rem;
+		color: var(--heading);
+	}
+	.count {
+		flex: none;
+		padding: 0.1rem 0.6rem;
+		border-radius: 999px;
+		background: rgb(var(--gray-light), 70%);
+		color: var(--muted);
+		font-size: 0.78em;
+		font-weight: 600;
+	}
+	.samples {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+	.samples li {
+		margin: 0;
+		font-size: 0.85em;
+		color: var(--muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.empty {
+		color: var(--muted);
+	}
+</style>

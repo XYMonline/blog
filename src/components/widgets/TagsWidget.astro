@@ -1,0 +1,55 @@
+---
+import { getTagCounts } from '../../lib/blog';
+
+const tags = await getTagCounts();
+---
+
+<section class="widget tags-widget" aria-label="文章标签">
+	<h3 class="widget-title">标签<span class="count">{tags.length}</span></h3>
+	<div class="widget-body">
+		{
+			tags.length ? (
+				<div class="chips">
+					{
+						tags.map(([name]) => (
+							<a href={`/archive/?tag=${encodeURIComponent(name)}`}>{name}</a>
+						))
+					}
+				</div>
+			) : (
+				<p class="empty">暂无标签</p>
+			)
+		}
+	</div>
+</section>
+
+<style>
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+	a {
+		padding: 0.2rem 0.6rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 999px;
+		color: var(--muted);
+		font-size: 0.82em;
+		text-decoration: none;
+		transition:
+			border-color 0.2s ease,
+			color 0.2s ease,
+			background-color 0.2s ease;
+	}
+	a:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+		background: color-mix(in srgb, var(--accent) 8%, transparent);
+	}
+	.empty {
+		margin: 0;
+		padding: 0.25rem 0.5rem;
+		color: var(--muted);
+		font-size: 0.85em;
+	}
+</style>

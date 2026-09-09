@@ -41,6 +41,16 @@ html[data-theme='dark'] {
 		0 16px 32px rgba(0, 0, 0, 0.3);
 	color-scheme: dark;
 }
+html,
+body {
+	/* 避免任何横向溢出产生页面级横向滚动条 */
+	overflow-x: clip;
+}
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
 body {
 	font-family: var(--font-atkinson);
 	margin: 0;
@@ -119,6 +129,9 @@ input {
 }
 table {
 	width: 100%;
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
 }
 img {
 	max-width: 100%;
@@ -133,6 +146,7 @@ code {
 pre {
 	padding: 1.5em;
 	border-radius: 8px;
+	overflow-x: auto;
 }
 pre > code {
 	all: unset;
@@ -172,4 +186,44 @@ hr {
 	clip-path: inset(50%);
 	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
+}
+
+/* ---------- 通用侧栏 widget 卡片 ---------- */
+.widget {
+	background: var(--surface);
+	border: 1px solid rgb(var(--gray-light));
+	border-radius: 12px;
+	box-shadow: 0 1px 3px rgba(var(--gray), 12%), 0 4px 12px rgba(var(--gray), 8%);
+	overflow: hidden;
+	min-width: 0;
+}
+.widget-title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0.7rem 1rem;
+	font-size: 0.95rem;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	border-bottom: 1px solid rgb(var(--gray-light));
+}
+.widget-title::before {
+	content: '';
+	width: 4px;
+	height: 1em;
+	border-radius: 2px;
+	background: var(--accent);
+}
+.widget-title .count {
+	margin-left: auto;
+	padding: 0.1rem 0.5rem;
+	border-radius: 999px;
+	background: rgb(var(--gray-light), 60%);
+	color: var(--muted);
+	font-size: 0.75em;
+	font-weight: 600;
+}
+.widget-body {
+	padding: 0.5rem;
 }

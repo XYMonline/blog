@@ -1,16 +1,29 @@
 ---
 import { Image } from 'astro:assets';
-import MainLayout from '../layouts/MainLayout.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
-import { getSortedPosts } from '../lib/blog';
+import MainLayout from '../../layouts/MainLayout.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { getHubCounts, getPostsOfHub, hubSlug } from '../../lib/blog';
 
-const posts = await getSortedPosts();
+export async function getStaticPaths() {
+	const hubs = await getHubCounts();
+	return hubs.map(([name]) => ({
+		params: { slug: hubSlug(name) },
+		props: { name },
+	}));
+}
+
+const { name } = Astro.props;
+const posts = await getPostsOfHub(name);
 ---
 
-<MainLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
-	<section class="home-posts">
-		<h2 class="section-title">最新文章</h2>
+<MainLayout title={`${SITE_TITLE} · 专题 · ${name}`} description={SITE_DESCRIPTION}>
+	<section class="hub-detail">
+		<div class="head">
+			<h2 class="section-title">{name}</h2>
+			<span class="count">{posts.length} 篇文章</span>
+		</div>
+
 		<div class="grid">
 			{
 				posts.map((post) => (
@@ -38,14 +51,24 @@ const posts = await getSortedPosts();
 </MainLayout>
 
 <style>
-	.home-posts {
+	.hub-detail {
 		max-width: 62rem;
 		margin: 0 auto;
 	}
+	.head {
+		display: flex;
+		align-items: baseline;
+		gap: 0.8rem;
+		margin-bottom: 1.25rem;
+	}
 	.section-title {
-		margin: 0 0 1.25rem;
+		margin: 0;
 		font-size: 1.5rem;
 		color: var(--heading);
+	}
+	.count {
+		font-size: 0.9em;
+		color: var(--muted);
 	}
 	.grid {
 		display: grid;

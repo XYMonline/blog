@@ -1,0 +1,187 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { getSortedPosts } from '../lib/blog';
+
+const posts = await getSortedPosts();
+
+const groups = posts.reduce<{ year: string; posts: typeof posts }[]>((acc, post) => {
+	const year = String(post.data.pubDate.getFullYear());
+	const last = acc[acc.length - 1];
+	if (last && last.year === year) {
+		last.posts.push(post);
+	} else {
+		acc.push({ year, posts: [post] });
+	}
+	return acc;
+}, []);
+---
+
+<MainLayout title={`${SITE_TITLE} · 归档`} description={SITE_DESCRIPTION}>
+	<section class="archive">
+		<div class="head">
+			<h2 class="section-title">归档</h2>
+			<p id="filter-hint" class="filter-hint" hidden></p>
+		</div>
+
+		<div id="groups">
+			{
+				groups.map(({ year, posts: yearPosts }) => (
+					<section class="year" data-year={year}>
+						<h3 class="year-title">{year}</h3>
+						<ul>
+							{
+								yearPosts.map((post) => (
+									<li
+										data-category={(post.data.category ?? '').toLowerCase()}
+										data-tags={(post.data.tags ?? []).map((t) => t.toLowerCase()).join(' ')}
+									>
+										<span class="item-date">
+											<FormattedDate date={post.data.pubDate} />
+										</span>
+										<a class="item-title" href={`/blog/${post.id}/`}>
+											{post.data.title}
+										</a>
+										<span class="item-tags">
+											{
+												(post.data.tags ?? []).map((tag) => (
+													<a href={`/archive/?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+												))
+											}
+										</span>
+									</li>
+								))
+							}
+						</ul>
+					</section>
+				))
+			}
+		</div>
+
+		<p id="empty" class="empty" hidden>该分类 / 标签下暂无文章。</p>
+	</section>
+</MainLayout>
+
+<script>
+	const params = new URLSearchParams(window.location.search);
+	const category = (params.get('category') ?? '').trim().toLowerCase();
+	const tag = (params.get('tag') ?? '').trim().toLowerCase();
+
+	const groups = document.querySelectorAll('#groups .year');
+	const items = document.querySelectorAll('#groups li');
+	const hint = document.getElementById('filter-hint');
+	const empty = document.getElementById('empty');
+
+	if (category || tag) {
+		let visible = 0;
+		for (const item of items) {
+			const inCategory = !category || (item.dataset.category ?? '').includes(category);
+			const inTag = !tag || (item.dataset.tags ?? '').split(' ').includes(tag);
+			const show = inCategory && inTag;
+			item.hidden = !show;
+			if (show) visible++;
+		}
+		for (const group of groups) {
+			const hasVisible = Array.from(group.querySelectorAll('li')).some((li) => !li.hidden);
+			group.hidden = !hasVisible;
+		}
+		if (hint) {
+			hint.hidden = false;
+			hint.textContent = `当前筛选 ${category ? `分类: ${category}` : `标签: ${tag}`}`;
+		}
+		if (empty) empty.hidden = visible !== 0;
+	}
+</script>
+
+<style>
+	.archive {
+		max-width: 46rem;
+		margin: 0 auto;
+	}
+	.head {
+		display: flex;
+		align-items: baseline;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+	}
+	.section-title {
+		margin: 0;
+		font-size: 1.5rem;
+		color: var(--heading);
+	}
+	.filter-hint {
+		margin: 0;
+		font-size: 0.9em;
+		color: var(--muted);
+	}
+	.year {
+		margin-bottom: 1.75rem;
+	}
+	.year-title {
+		margin: 0 0 0.5rem;
+		padding-bottom: 0.4rem;
+		border-bottom: 1px solid rgb(var(--gray-light));
+		font-size: 1.2rem;
+		color: var(--heading);
+	}
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	li {
+		display: flex;
+		align-items: baseline;
+		gap: 0.9rem;
+		padding: 0.45rem 0;
+		border-bottom: 1px dashed rgb(var(--gray-light), 60%);
+	}
+	.item-date {
+		flex: none;
+		min-width: 7.2rem;
+		font-size: 0.82em;
+		color: var(--muted);
+	}
+	.item-title {
+		color: var(--text);
+		text-decoration: none;
+		font-weight: 600;
+		transition: color 0.2s ease;
+		overflow-wrap: anywhere;
+	}
+	.item-title:hover {
+		color: var(--accent);
+	}
+	.item-tags {
+		margin-left: auto;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.35rem;
+	}
+	.item-tags a {
+		font-size: 0.78em;
+		color: var(--muted);
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+	.item-tags a:hover {
+		color: var(--accent);
+	}
+	.empty {
+		padding: 2rem;
+		text-align: center;
+		color: var(--muted);
+	}
+	@media (max-width: 40rem) {
+		li {
+			flex-wrap: wrap;
+			gap: 0.35rem 0.9rem;
+		}
+		.item-tags {
+			margin-left: 0;
+			justify-content: flex-start;
+		}
+	}
+</style>
