@@ -17,6 +17,8 @@ const blog = defineCollection({
 			category: z.string().optional(),
 			tags: z.array(z.string()).default([]),
 			hubs: z.array(z.string()).default([]),
+			// 置顶:为 true 时在列表(如首页)中优先展示
+			pinned: z.boolean().default(false),
 		}),
 });
 

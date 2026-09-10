@@ -6,7 +6,7 @@ import TableOfContents from '../components/TableOfContents.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, pubDate, updatedDate, heroImage, tags } = Astro.props;
 ---
 
 <article class="post">
@@ -31,6 +31,17 @@ const { title, pubDate, updatedDate, heroImage } = Astro.props;
 				}
 			</div>
 			<h1>{title}</h1>
+			{
+				tags.length > 0 && (
+					<ul class="post-tags" aria-label="文章标签">
+						{tags.map((tag) => (
+							<li>
+								<a href={`/archive/?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+							</li>
+						))}
+					</ul>
+				)
+			}
 			<hr />
 		</header>
 		<slot />
@@ -68,5 +79,33 @@ const { title, pubDate, updatedDate, heroImage } = Astro.props;
 	}
 	.last-updated-on {
 		font-style: italic;
+	}
+	.post-tags {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.45rem;
+		margin: 0.9em 0 1.1em;
+		padding: 0;
+		list-style: none;
+		line-height: 1.4;
+	}
+	.post-tags a {
+		display: inline-block;
+		padding: 0.15rem 0.7rem;
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 999px;
+		color: var(--muted);
+		font-size: 0.8rem;
+		text-decoration: none;
+		transition:
+			border-color 0.2s ease,
+			color 0.2s ease,
+			background-color 0.2s ease;
+	}
+	.post-tags a:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+		background: color-mix(in srgb, var(--accent) 8%, transparent);
 	}
 </style>

@@ -2,9 +2,12 @@ import { getCollection } from 'astro:content';
 
 export type Post = Awaited<ReturnType<typeof getCollection<'blog'>>>[number];
 
-export async function getSortedPosts(): Promise<Post[]> {
+export async function getSortedPosts(options: { pinnedFirst?: boolean } = {}): Promise<Post[]> {
 	const posts = await getCollection('blog');
-	return posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+	const byDate = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+	if (!options.pinnedFirst) return byDate;
+	// Array.prototype.sort 是稳定的,所以置顶组内部仍保持时间倒序
+	return [...byDate].sort((a, b) => Number(b.data.pinned) - Number(a.data.pinned));
 }
 
 export async function getCategoryCounts(): Promise<[string, number][]> {

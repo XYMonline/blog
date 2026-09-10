@@ -8,7 +8,6 @@ import CategoriesWidget from '../components/widgets/CategoriesWidget.astro';
 import HubsWidget from '../components/widgets/HubsWidget.astro';
 import RecentPostsWidget from '../components/widgets/RecentPostsWidget.astro';
 import SiteStatsWidget from '../components/widgets/SiteStatsWidget.astro';
-import TagsWidget from '../components/widgets/TagsWidget.astro';
 
 interface Props {
 	title: string;
@@ -91,7 +90,6 @@ const showToc = right === 'toc';
 				<AuthorCard />
 				<CategoriesWidget />
 				<HubsWidget />
-				<TagsWidget />
 			</div>
 			<main id="article-body" class="shell-main">
 				<slot />

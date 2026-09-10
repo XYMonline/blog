@@ -221,7 +221,8 @@ hr {
 	border-radius: 999px;
 	background: rgb(var(--gray-light), 60%);
 	color: var(--muted);
-	font-size: 0.75em;
+	/* 与列表项 .num 保持同一视觉字号(继承标题的 0.95rem) */
+	font-size: 1em;
 	font-weight: 600;
 }
 .widget-body {

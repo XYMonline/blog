@@ -4,6 +4,7 @@ description: 'Lorem ipsum dolor sit amet'
 pubDate: 'Jul 08 2022'
 heroImage: '../../assets/blog-placeholder-3.jpg'
 category: '随笔'
+pinned: true
 tags: ['随笔']
 ---
 

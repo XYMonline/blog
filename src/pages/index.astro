@@ -5,7 +5,7 @@ import FormattedDate from '../components/FormattedDate.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import { getSortedPosts } from '../lib/blog';
 
-const posts = await getSortedPosts();
+const posts = await getSortedPosts({ pinnedFirst: true });
 ---
 
 <MainLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
@@ -24,6 +24,7 @@ const posts = await getSortedPosts();
 						}
 						<div class="body">
 							<div class="meta">
+								{post.data.pinned && <span class="pin">置顶</span>}
 								<FormattedDate date={post.data.pubDate} />
 								{post.data.category && <span class="cat">{post.data.category}</span>}
 							</div>
@@ -93,6 +94,13 @@ const posts = await getSortedPosts();
 		border-radius: 999px;
 		background: rgb(var(--gray-light), 70%);
 		color: var(--muted);
+		font-weight: 600;
+	}
+	.pin {
+		padding: 0.05rem 0.5rem;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--bg);
 		font-weight: 600;
 	}
 	.title {
